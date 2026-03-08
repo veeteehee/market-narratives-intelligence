@@ -3,7 +3,7 @@
 > Unsupervised detection of emerging financial narratives from news text — with sentiment analysis, storyline graphing, and sector volatility prediction.
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python)](https://python.org)
-[![Streamlit](https://img.shields.io/badge/Streamlit-Live%20App-FF4B4B?logo=streamlit)](https://market-narratives-intelligence-qmaaa2r5c5zwdybsbmrvdc.streamlit.app/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-Live%20App-FF4B4B?logo=streamlit)](https://market-narratives-intelligence-jnztjxdg98b9yrcnjyaffw.streamlit.app/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![HuggingFace](https://img.shields.io/badge/Model-FinBERT-yellow?logo=huggingface)](https://huggingface.co/ProsusAI/finbert)
 
@@ -11,7 +11,7 @@
 
 ## 🔗 Live Demo
 
-**[→ Launch Streamlit App](https://market-narratives-intelligence-qmaaa2r5c5zwdybsbmrvdc.streamlit.app/)**
+**[→ Launch Streamlit App](https://market-narratives-intelligence-jnztjxdg98b9yrcnjyaffw.streamlit.app/)**
 
 Upload any CSV of financial text and get instant narrative clusters, sentiment scores, a storyline graph, and a downloadable PDF report.
 
@@ -210,4 +210,4 @@ MIT — free to use, modify, and distribute.
 
 ---
 
-*BSc Final Year AI Project · 2024–2025*
+
