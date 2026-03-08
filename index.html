@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Market Narrative Intelligence · BSc AI Project</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet"/>
+<style>
+  /* ── Reset & base ─────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #04090f;
+    --surface: #080f1c;
+    --card:    #0b1525;
+    --border:  #152035;
+    --border2: #1e3a5f;
+    --blue:    #38bdf8;
+    --indigo:  #818cf8;
+    --rose:    #fb7185;
+    --amber:   #fbbf24;
+    --green:   #34d399;
+    --text:    #e2eaf6;
+    --muted:   #5d7a99;
+    --mono:    'IBM Plex Mono', monospace;
+    --display: 'Bebas Neue', sans-serif;
+    --serif:   'DM Serif Display', serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  ::selection { background: var(--blue); color: var(--bg); }
+
+  /* ── Scrollbar ────────────────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* ── Noise overlay ────────────────────────────────────────────────── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  }
+
+  /* ── Scan lines ───────────────────────────────────────────────────── */
+  body::after {
+    content: '';
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 2px,
+      rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px
+    );
+  }
+
+  /* ── Nav ─────────────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 2.5rem;
+    background: rgba(4,9,15,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-family: var(--display);
+    font-size: 1.35rem;
+    letter-spacing: 0.12em;
+    color: var(--blue);
+  }
+
+  .nav-links { display: flex; gap: 2rem; list-style: none; }
+  .nav-links a {
+    font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--blue); }
+
+  .nav-badge {
+    font-size: 0.65rem; letter-spacing: 0.1em;
+    color: var(--blue); border: 1px solid var(--blue);
+    padding: 0.25rem 0.7rem; border-radius: 2px;
+    text-transform: uppercase;
+    animation: blink-border 2s infinite;
+  }
+
+  @keyframes blink-border {
+    0%,100% { border-color: var(--blue); }
+    50%     { border-color: transparent; }
+  }
+
+  /* ── Hero ─────────────────────────────────────────────────────────── */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    padding: 8rem 2rem 4rem;
+    position: relative; z-index: 2;
+    overflow: hidden;
+  }
+
+  /* animated grid */
+  .hero-grid {
+    position: absolute; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: grid-drift 20s linear infinite;
+    opacity: 0.35;
+  }
+  @keyframes grid-drift {
+    0%   { background-position: 0 0; }
+    100% { background-position: 60px 60px; }
+  }
+
+  /* radial glow */
+  .hero-glow {
+    position: absolute; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 60% 55% at 30% 50%, rgba(56,189,248,0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 45% at 70% 40%, rgba(129,140,248,0.07) 0%, transparent 70%);
+  }
+
+  .hero-eyebrow {
+    font-size: 0.72rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--blue); margin-bottom: 1.5rem; z-index: 1;
+    animation: fade-up 0.8s ease both;
+  }
+
+  .hero-title {
+    font-family: var(--display);
+    font-size: clamp(3.5rem, 9vw, 8rem);
+    line-height: 0.92;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    z-index: 1;
+    animation: fade-up 0.9s 0.1s ease both;
+  }
+
+  .hero-title .accent { color: var(--blue); }
+
+  .hero-sub {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: clamp(1rem, 2.2vw, 1.4rem);
+    color: var(--muted);
+    max-width: 680px;
+    margin: 1.8rem auto 0;
+    line-height: 1.55;
+    z-index: 1;
+    animation: fade-up 1s 0.2s ease both;
+  }
+
+  .hero-cta {
+    display: flex; gap: 1rem; margin-top: 3rem; z-index: 1;
+    flex-wrap: wrap; justify-content: center;
+    animation: fade-up 1s 0.3s ease both;
+  }
+
+  .btn {
+    font-family: var(--mono);
+    font-size: 0.78rem; letter-spacing: 0.15em; text-transform: uppercase;
+    padding: 0.85rem 2rem; border-radius: 3px;
+    text-decoration: none; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: var(--blue); color: var(--bg);
+    border: 1px solid var(--blue);
+  }
+  .btn-primary:hover { background: transparent; color: var(--blue); }
+
+  .btn-outline {
+    background: transparent; color: var(--text);
+    border: 1px solid var(--border2);
+  }
+  .btn-outline:hover { border-color: var(--blue); color: var(--blue); }
+
+  /* ticker */
+  .ticker-wrap {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    overflow: hidden; z-index: 10;
+    padding: 0.55rem 0;
+  }
+  .ticker {
+    display: flex; gap: 4rem;
+    animation: ticker-scroll 30s linear infinite;
+    white-space: nowrap;
+  }
+  .ticker-item {
+    font-size: 0.72rem; letter-spacing: 0.08em; color: var(--muted);
+  }
+  .ticker-item .up   { color: var(--green); }
+  .ticker-item .down { color: var(--rose);  }
+  @keyframes ticker-scroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  @keyframes fade-up {
+    from { opacity:0; transform:translateY(20px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  /* ── Section common ───────────────────────────────────────────────── */
+  section {
+    position: relative; z-index: 2;
+    padding: 6rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-size: 0.68rem; letter-spacing: 0.28em; text-transform: uppercase;
+    color: var(--blue); margin-bottom: 0.7rem;
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+  .section-label::before {
+    content: ''; display: block;
+    width: 28px; height: 1px; background: var(--blue);
+  }
+
+  .section-title {
+    font-family: var(--display);
+    font-size: clamp(2.2rem, 5vw, 4rem);
+    letter-spacing: 0.05em;
+    line-height: 1;
+    color: var(--text);
+    margin-bottom: 1rem;
+  }
+
+  .section-body {
+    font-size: 0.88rem; line-height: 1.75;
+    color: var(--muted); max-width: 560px;
+  }
+
+  /* ── Stats row ────────────────────────────────────────────────────── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1px;
+    border: 1px solid var(--border);
+    background: var(--border);
+    margin: 5rem 0;
+  }
+
+  .stat-card {
+    background: var(--card); padding: 2rem 1.5rem;
+    animation: fade-up 0.8s ease both;
+  }
+
+  .stat-val {
+    font-family: var(--display);
+    font-size: 3.2rem; letter-spacing: 0.04em;
+    color: var(--text); line-height: 1;
+  }
+  .stat-val span { color: var(--blue); font-size: 2rem; }
+
+  .stat-label {
+    font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--muted); margin-top: 0.5rem;
+  }
+
+  /* ── Pipeline steps ───────────────────────────────────────────────── */
+  .pipeline {
+    display: flex; flex-direction: column; gap: 0;
+    margin-top: 3rem;
+  }
+
+  .pipe-step {
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    gap: 0 1.5rem;
+    padding: 2rem 0;
+    border-bottom: 1px solid var(--border);
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: all 0.5s ease;
+  }
+  .pipe-step.visible { opacity:1; transform:translateX(0); }
+
+  .pipe-num {
+    font-family: var(--display);
+    font-size: 3rem; color: var(--border2);
+    line-height: 1; padding-top: 0.1rem;
+    transition: color 0.3s;
+  }
+  .pipe-step:hover .pipe-num { color: var(--blue); }
+
+  .pipe-content {}
+  .pipe-tag {
+    font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--blue); margin-bottom: 0.4rem;
+  }
+  .pipe-title {
+    font-family: var(--serif); font-size: 1.3rem;
+    color: var(--text); margin-bottom: 0.5rem;
+  }
+  .pipe-desc { font-size: 0.8rem; line-height: 1.65; color: var(--muted); }
+
+  .pipe-tech {
+    display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.8rem;
+  }
+  .chip {
+    font-size: 0.65rem; letter-spacing: 0.1em;
+    color: var(--blue); background: rgba(56,189,248,0.08);
+    border: 1px solid rgba(56,189,248,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 2px;
+  }
+
+  /* ── Data preview ────────────────────────────────────────────────── */
+  .data-section {
+    padding: 6rem 2rem;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .data-inner { max-width: 1200px; margin: 0 auto; }
+
+  .terminal {
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 2.5rem;
+    font-size: 0.78rem;
+  }
+  .terminal-bar {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 0.6rem 1rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .t-dot { width:10px; height:10px; border-radius:50%; }
+  .t-red    { background:#ff5f57; }
+  .t-yellow { background:#febc2e; }
+  .t-green  { background:#28c840; }
+  .t-title  { margin-left:auto; color:var(--muted); font-size:0.7rem; }
+
+  .terminal-body { padding: 1.2rem 1.5rem; }
+  .t-line { line-height: 1.9; }
+  .t-prompt  { color: var(--green); }
+  .t-cmd     { color: var(--text); }
+  .t-comment { color: var(--muted); }
+  .t-out     { color: var(--blue);  }
+  .t-pos     { color: var(--green); }
+  .t-neg     { color: var(--rose);  }
+  .t-neu     { color: var(--amber); }
+
+  /* ── Sentiment distribution bars ─────────────────────────────────── */
+  .dist-section { max-width: 1200px; margin: 0 auto; padding: 6rem 2rem; }
+
+  .dist-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 3rem; margin-top: 3rem;
+    align-items: start;
+  }
+  @media(max-width:768px){ .dist-grid { grid-template-columns:1fr; } }
+
+  .dist-bar-wrap { margin-bottom: 1.2rem; }
+  .dist-bar-label {
+    display: flex; justify-content: space-between;
+    font-size: 0.75rem; color: var(--muted); margin-bottom: 0.4rem;
+  }
+  .dist-bar-track {
+    height: 6px; background: var(--border);
+    border-radius: 3px; overflow: hidden;
+  }
+  .dist-bar-fill {
+    height: 100%; border-radius: 3px;
+    animation: bar-grow 1.2s cubic-bezier(.23,1,.32,1) both;
+  }
+  @keyframes bar-grow {
+    from { width: 0; }
+  }
+
+  /* ── Architecture section ────────────────────────────────────────── */
+  .arch-section {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 6rem 2rem;
+  }
+  .arch-inner  { max-width:1200px; margin:0 auto; }
+
+  .arch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1px; background: var(--border);
+    border: 1px solid var(--border);
+    margin-top: 3rem;
+  }
+
+  .arch-card {
+    background: var(--card); padding: 1.8rem 1.5rem;
+    transition: background 0.2s;
+    cursor: default;
+  }
+  .arch-card:hover { background: #0e1d33; }
+
+  .arch-card-icon {
+    font-size: 1.6rem; margin-bottom: 0.8rem;
+  }
+  .arch-card-title {
+    font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--text); margin-bottom: 0.5rem;
+  }
+  .arch-card-desc { font-size: 0.73rem; line-height: 1.6; color: var(--muted); }
+
+  /* ── Model card ──────────────────────────────────────────────────── */
+  .model-section { max-width: 1200px; margin: 0 auto; padding: 6rem 2rem; }
+
+  .model-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem; margin-top: 3rem;
+  }
+  @media(max-width:900px){ .model-grid { grid-template-columns:1fr; } }
+
+  .model-card {
+    border: 1px solid var(--border2);
+    padding: 2rem 1.5rem;
+    background: var(--card);
+    position: relative; overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .model-card::before {
+    content:''; position:absolute;
+    top:0; left:0; right:0; height:3px;
+  }
+  .model-card.ridge::before    { background: var(--blue);   }
+  .model-card.rf::before       { background: var(--green);  }
+  .model-card.gb::before       { background: var(--amber);  }
+  .model-card:hover { border-color: var(--blue); transform: translateY(-3px); }
+
+  .model-name {
+    font-family: var(--display); font-size: 1.6rem;
+    letter-spacing: 0.05em; color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+  .model-desc { font-size: 0.78rem; line-height: 1.65; color: var(--muted); }
+  .model-props { margin-top: 1.2rem; }
+  .model-prop {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.72rem;
+  }
+  .model-prop-key { color: var(--muted); }
+  .model-prop-val { color: var(--blue);  }
+
+  /* ── Footer ──────────────────────────────────────────────────────── */
+  footer {
+    position: relative; z-index: 2;
+    border-top: 1px solid var(--border);
+    padding: 3rem 2rem;
+    display: flex; flex-wrap: wrap;
+    justify-content: space-between; align-items: center;
+    gap: 1rem; max-width: 100%;
+  }
+  .footer-left { font-size: 0.72rem; color: var(--muted); line-height: 1.6; }
+  .footer-right {
+    font-family: var(--display); font-size: 1.5rem;
+    letter-spacing: 0.1em; color: var(--border2);
+  }
+
+  /* ── Floating cursor dot ─────────────────────────────────────────── */
+  #cursor-dot {
+    position: fixed; width: 6px; height: 6px;
+    background: var(--blue); border-radius: 50%;
+    pointer-events: none; z-index: 9999;
+    transform: translate(-50%,-50%);
+    transition: transform 0.1s;
+    mix-blend-mode: screen;
+  }
+  #cursor-ring {
+    position: fixed; width: 30px; height: 30px;
+    border: 1px solid rgba(56,189,248,0.4); border-radius: 50%;
+    pointer-events: none; z-index: 9999;
+    transform: translate(-50%,-50%);
+    transition: all 0.15s ease;
+  }
+
+  /* ── Live clock ──────────────────────────────────────────────────── */
+  #live-clock {
+    font-size: 0.7rem; color: var(--blue); letter-spacing: 0.1em;
+  }
+</style>
+</head>
+<body>
+
+<div id="cursor-dot"></div>
+<div id="cursor-ring"></div>
+
+<!-- NAV ──────────────────────────────────────────────────────────────────── -->
+<nav>
+  <div class="nav-logo">MNI</div>
+  <ul class="nav-links">
+    <li><a href="#pipeline">Pipeline</a></li>
+    <li><a href="#data">Data</a></li>
+    <li><a href="#models">Models</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+  </ul>
+  <div class="nav-badge" id="live-clock">LOADING…</div>
+</nav>
+
+<!-- HERO ─────────────────────────────────────────────────────────────────── -->
+<div class="hero" id="home">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+
+  <div class="hero-eyebrow">BSc Final Year AI Project · 2024–2025</div>
+
+  <h1 class="hero-title">
+    MARKET<br/><span class="accent">NARRATIVE</span><br/>INTELLIGENCE
+  </h1>
+
+  <p class="hero-sub">
+    Detecting emerging financial storylines from 4,846 labelled news sentences
+    using unsupervised deep learning, then predicting sector-level volatility
+    through narrative-driven feature engineering.
+  </p>
+
+  <div class="hero-cta">
+    <a class="btn btn-primary" href="#pipeline">Explore Pipeline</a>
+    <a class="btn btn-outline"  href="#data">View Dataset</a>
+  </div>
+
+  <!-- ticker -->
+  <div class="ticker-wrap">
+    <div class="ticker">
+      <span class="ticker-item">NARRATIVE DETECTION <span class="up">▲ ACTIVE</span></span>
+      <span class="ticker-item">all-data.csv · 4,846 DOCS</span>
+      <span class="ticker-item">SENTIMENT <span class="up">59.4% NEUTRAL</span></span>
+      <span class="ticker-item">POSITIVE <span class="up">28.1%</span></span>
+      <span class="ticker-item">NEGATIVE <span class="down">12.5%</span></span>
+      <span class="ticker-item">MODEL · HDBSCAN + UMAP</span>
+      <span class="ticker-item">VOLATILITY <span class="up">▲ RIDGE / RF / GBM</span></span>
+      <span class="ticker-item">EMBEDDINGS · all-MiniLM-L6-v2 · 384-D</span>
+      <span class="ticker-item">FINBERT · ProsusAI/finbert · DOMAIN SENTIMENT</span>
+      <span class="ticker-item">TIMESERIESSPLIT · 5-FOLD CV · NO LOOKAHEAD BIAS</span>
+      <!-- duplicate for seamless loop -->
+      <span class="ticker-item">NARRATIVE DETECTION <span class="up">▲ ACTIVE</span></span>
+      <span class="ticker-item">all-data.csv · 4,846 DOCS</span>
+      <span class="ticker-item">SENTIMENT <span class="up">59.4% NEUTRAL</span></span>
+      <span class="ticker-item">POSITIVE <span class="up">28.1%</span></span>
+      <span class="ticker-item">NEGATIVE <span class="down">12.5%</span></span>
+      <span class="ticker-item">MODEL · HDBSCAN + UMAP</span>
+      <span class="ticker-item">VOLATILITY <span class="up">▲ RIDGE / RF / GBM</span></span>
+      <span class="ticker-item">EMBEDDINGS · all-MiniLM-L6-v2 · 384-D</span>
+      <span class="ticker-item">FINBERT · ProsusAI/finbert · DOMAIN SENTIMENT</span>
+      <span class="ticker-item">TIMESERIESSPLIT · 5-FOLD CV · NO LOOKAHEAD BIAS</span>
+    </div>
+  </div>
+</div>
+
+<!-- STATS ────────────────────────────────────────────────────────────────── -->
+<div style="max-width:1200px;margin:0 auto;padding:0 2rem;">
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-val">4<span>,846</span></div>
+      <div class="stat-label">Financial Sentences</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val">384<span>-D</span></div>
+      <div class="stat-label">Embedding Dimensions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val">5<span>→2</span></div>
+      <div class="stat-label">UMAP Reduction</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val">3<span>×</span></div>
+      <div class="stat-label">Volatility Models</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val">10<span>+</span></div>
+      <div class="stat-label">Pipeline Stages</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val">5<span>-CV</span></div>
+      <div class="stat-label">TimeSeriesSplit Folds</div>
+    </div>
+  </div>
+</div>
+
+<!-- PIPELINE ──────────────────────────────────────────────────────────────── -->
+<section id="pipeline">
+  <div class="section-label">System Pipeline</div>
+  <h2 class="section-title">HOW IT WORKS</h2>
+  <p class="section-body">
+    Thirteen sequential stages transform raw financial text into clustered
+    narratives and volatility predictions — all within a single Streamlit interface.
+  </p>
+
+  <div class="pipeline">
+    <div class="pipe-step">
+      <div class="pipe-num">01</div>
+      <div class="pipe-content">
+        <div class="pipe-tag">Ingestion</div>
+        <div class="pipe-title">Raw Data Loading</div>
+        <div class="pipe-desc">Reads all-data.csv (4,846 labelled financial sentences) with automatic encoding detection — handles UTF-8 and latin-1. Auto-detects headerless files and assigns columns accordingly.</div>
+        <div class="pipe-tech"><span class="chip">pandas</span><span class="chip">latin-1</span><span class="chip">auto-detect</span></div>
+      </div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">02</div>
+      <div class="pipe-content">
+        <div class="pipe-tag">Preprocessing</div>
+        <div class="pipe-title">Text Cleaning & Filtering</div>
+        <div class="pipe-desc">Strips whitespace, removes texts shorter than 10 characters, and validates schema. Optional columns (date, sector, return) are detected and used downstream.</div>
+        <div class="pipe-tech"><span class="chip">str.strip</span><span class="chip">length filter</span><span class="chip">schema check</span></div>
+      </div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">03</div>
+      <div class="pipe-content">
+        <div class="pipe-tag">Representation</div>
+        <div class="pipe-title">Semantic Embeddings</div>
+        <div class="pipe-desc">Each sentence is encoded into a 384-dimensional dense vector using all-MiniLM-L6-v2. Results are cached with st.cache_data — no recomputation on parameter changes.</div>
+        <div class="pipe-tech"><span class="chip">sentence-transformers</span><span class="chip">all-MiniLM-L6-v2</span><span class="chip">384-D</span></div>
+      </div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">04</div>
+      <div class="pipe-content">
+        <div class="pipe-tag">Reduction</div>
+        <div class="pipe-title">UMAP Dimensionality Reduction</div>
+        <div class="pipe-desc">UMAP with cosine metric collapses 384-D to 5-D for clustering and 2-D for visualisation. This critical step — missing from the original code — dramatically improves HDBSCAN cluster quality.</div>
+        <div class="pipe-tech"><span class="chip">umap-learn</span><span class="chip">cosine metric</span><span class="chip">min_dist=0</span></div>
+      </div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">05</div>
+      <div class="pipe-content">
+        <div class="pipe-tag">Clustering</div>
+        <div class="pipe-title">HDBSCAN Narrative Detection</div>
+        <div class="pipe-desc">Density-based clustering identifies variable-shape narrative clusters and labels noise points as -1. Returns per-document confidence probabilities. Sidesteps the need to pre-specify cluster count.</div>
+        <div class="pipe-tech"><span class="chip">hdbscan</span><span class="chip">eom selection</span><span class="chip">noise-aware</span></div>
+      </div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">06</div>
+      <div class="pipe-content">
+        <div class="pipe-tag">Sentiment</div>
+        <div class="pipe-title">FinBERT Financial Sentiment</div>
+        <div class="pipe-desc">ProsusAI/finbert scores each sentence as positive, negative, or neutral — fine-tuned on financial text for far greater accuracy than lexicon methods. TextBlob provided as a fast fallback.</div>
+        <div class="pipe-tech"><span class="chip">finbert</span><span class="chip">transformers</span><span class="chip">textblob fallback</span></div>
+      </div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">07</div>
+      <div class="pipe-content">
+        <div class="pipe-tag">Themes</div>
+        <div class="pipe-title">TF-IDF Keyword Extraction</div>
+        <div class="pipe-desc">Fit globally on all texts, transformed per cluster to extract the top-10 most distinctive bigram keywords per narrative. Correct approach — fitting per-cluster would break term comparability.</div>
+        <div class="pipe-tech"><span class="chip">tfidf</span><span class="chip">bigrams</span><span class="chip">2000 features</span></div>
+      </div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">08</div>
+      <div class="pipe-content">
+        <div class="pipe-tag">Strength</div>
+        <div class="pipe-title">Narrative Strength Scoring</div>
+        <div class="pipe-desc">Aggregates document volume, average cluster confidence, and mean sentiment per narrative. Produces a ranked table identifying dominant vs emerging storylines.</div>
+        <div class="pipe-tech"><span class="chip">volume</span><span class="chip">confidence</span><span class="chip">sentiment</span></div>
+      </div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">09</div>
+      <div class="pipe-content">
+        <div class="pipe-tag">Graph</div>
+        <div class="pipe-title">Cosine-Weighted Storyline Graph</div>
+        <div class="pipe-desc">Builds a NetworkX graph where edges are only drawn between same-narrative documents with cosine similarity > 0.85. Node size encodes sentiment magnitude. Replaces the meaningless complete-subgraph approach.</div>
+        <div class="pipe-tech"><span class="chip">networkx</span><span class="chip">cosine similarity</span><span class="chip">threshold=0.85</span></div>
+      </div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">10</div>
+      <div class="pipe-content">
+        <div class="pipe-tag">Trend</div>
+        <div class="pipe-title">Temporal Narrative Tracking</div>
+        <div class="pipe-desc">When a date column is present, plots daily document volume per narrative over time. Reveals narrative lifecycle — emergence, peak, and decay — critical for investment signal timing.</div>
+        <div class="pipe-tech"><span class="chip">time series</span><span class="chip">pivot table</span><span class="chip">line chart</span></div>
+      </div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">11</div>
+      <div class="pipe-content">
+        <div class="pipe-tag">Core Model</div>
+        <div class="pipe-title">Sector Volatility Prediction</div>
+        <div class="pipe-desc">Engineers narrative-strength and sentiment features into a daily time series matrix, then trains Ridge Regression, Random Forest, or Gradient Boosting models using TimeSeriesSplit to prevent look-ahead bias.</div>
+        <div class="pipe-tech"><span class="chip">ridge</span><span class="chip">random forest</span><span class="chip">gradient boosting</span><span class="chip">timeseriessplit</span></div>
+      </div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">12</div>
+      <div class="pipe-content">
+        <div class="pipe-tag">Explainability</div>
+        <div class="pipe-title">Feature Importance Analysis</div>
+        <div class="pipe-desc">Surfaces which specific narratives (by ID and type — volume vs sentiment) most strongly predict volatility. Provides economic interpretation: which market storylines are driving sector risk.</div>
+        <div class="pipe-tech"><span class="chip">feature importances</span><span class="chip">ridge coef</span><span class="chip">narrative attribution</span></div>
+      </div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">13</div>
+      <div class="pipe-content">
+        <div class="pipe-tag">Output</div>
+        <div class="pipe-title">Annotated Dataset Export</div>
+        <div class="pipe-desc">Exports a downloadable CSV enriched with Narrative ID, cluster confidence, sentiment score, UMAP coordinates — full audit trail for further analysis or academic submission.</div>
+        <div class="pipe-tech"><span class="chip">csv export</span><span class="chip">umap coords</span><span class="chip">full annotation</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DATA ─────────────────────────────────────────────────────────────────── -->
+<div class="data-section" id="data">
+<div class="data-inner">
+  <div class="section-label">Dataset</div>
+  <h2 class="section-title">THE DATA</h2>
+  <p class="section-body" style="margin-bottom:0">
+    4,846 labelled financial news sentences across positive, negative, and neutral
+    sentiment classes. Encoded in latin-1, auto-detected by the pipeline.
+  </p>
+
+  <div class="terminal">
+    <div class="terminal-bar">
+      <div class="t-dot t-red"></div>
+      <div class="t-dot t-yellow"></div>
+      <div class="t-dot t-green"></div>
+      <div class="t-title">all-data.csv · python3</div>
+    </div>
+    <div class="terminal-body">
+      <div class="t-line"><span class="t-prompt">$</span> <span class="t-cmd">python3 -c "import pandas as pd; df = pd.read_csv('all-data.csv', encoding='latin1', header=None, names=['sentiment','text']); print(df.describe())"</span></div>
+      <br/>
+      <div class="t-line"><span class="t-comment"># Shape</span></div>
+      <div class="t-line"><span class="t-out">(4846, 2)</span></div>
+      <br/>
+      <div class="t-line"><span class="t-comment"># Sentiment distribution</span></div>
+      <div class="t-line"><span class="t-neu">neutral    2879  (59.4%)</span></div>
+      <div class="t-line"><span class="t-pos">positive   1363  (28.1%)</span></div>
+      <div class="t-line"><span class="t-neg">negative    604  (12.5%)</span></div>
+      <br/>
+      <div class="t-line"><span class="t-comment"># Sample rows</span></div>
+      <div class="t-line"><span class="t-pos">positive</span>  <span class="t-out">"With the new production plant the company would increase its capacity..."</span></div>
+      <div class="t-line"><span class="t-neg">negative</span>  <span class="t-out">"Elcoteq has laid off tens of employees from its Tallinn facility..."</span></div>
+      <div class="t-line"><span class="t-neu">neutral </span>  <span class="t-out">"According to Gran, the company has no plans to move all production to Russia..."</span></div>
+    </div>
+  </div>
+
+  <!-- Sentiment bars -->
+  <div class="dist-grid" style="margin-top:3rem;">
+    <div>
+      <h3 style="font-family:var(--serif);font-size:1.3rem;color:var(--text);margin-bottom:1.5rem;">
+        Sentiment Distribution
+      </h3>
+      <div class="dist-bar-wrap">
+        <div class="dist-bar-label"><span>Neutral</span><span>59.4% · 2,879</span></div>
+        <div class="dist-bar-track">
+          <div class="dist-bar-fill" style="width:59.4%;background:var(--amber);animation-delay:0.1s;"></div>
+        </div>
+      </div>
+      <div class="dist-bar-wrap">
+        <div class="dist-bar-label"><span>Positive</span><span>28.1% · 1,363</span></div>
+        <div class="dist-bar-track">
+          <div class="dist-bar-fill" style="width:28.1%;background:var(--green);animation-delay:0.25s;"></div>
+        </div>
+      </div>
+      <div class="dist-bar-wrap">
+        <div class="dist-bar-label"><span>Negative</span><span>12.5% · 604</span></div>
+        <div class="dist-bar-track">
+          <div class="dist-bar-fill" style="width:12.5%;background:var(--rose);animation-delay:0.4s;"></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3 style="font-family:var(--serif);font-size:1.3rem;color:var(--text);margin-bottom:1.5rem;">
+        Why This Dataset
+      </h3>
+      <p style="font-size:0.82rem;line-height:1.8;color:var(--muted);">
+        The Financial PhraseBank dataset contains sentences from financial news
+        annotated by domain experts. The imbalance (neutral-heavy) reflects real
+        market commentary — most statements are factual rather than directional.
+        This makes the clustering task non-trivial and realistic.
+      </p>
+      <p style="font-size:0.82rem;line-height:1.8;color:var(--muted);margin-top:1rem;">
+        Ground-truth sentiment labels enable validation of the FinBERT inference
+        pipeline against expert human annotation, providing a rigorous evaluation
+        baseline rarely available in unsupervised NLP projects.
+      </p>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- MODELS ───────────────────────────────────────────────────────────────── -->
+<div class="model-section" id="models">
+  <div class="section-label">Volatility Prediction</div>
+  <h2 class="section-title">THREE MODELS</h2>
+  <p class="section-body">
+    Each model is trained on narrative-strength features and evaluated with
+    TimeSeriesSplit cross-validation — no look-ahead bias.
+  </p>
+
+  <div class="model-grid">
+    <div class="model-card ridge">
+      <div class="model-name">RIDGE</div>
+      <div class="model-desc">L2-regularised linear regression. Interpretable coefficients map directly to narrative–volatility relationships. Fast to train; ideal as a baseline.</div>
+      <div class="model-props">
+        <div class="model-prop"><span class="model-prop-key">Alpha</span><span class="model-prop-val">1.0</span></div>
+        <div class="model-prop"><span class="model-prop-key">Importance</span><span class="model-prop-val">|coef|</span></div>
+        <div class="model-prop"><span class="model-prop-key">Scaling</span><span class="model-prop-val">StandardScaler</span></div>
+        <div class="model-prop"><span class="model-prop-key">CV</span><span class="model-prop-val">TimeSeriesSplit(5)</span></div>
+        <div class="model-prop"><span class="model-prop-key">Best for</span><span class="model-prop-val">Interpretability</span></div>
+      </div>
+    </div>
+    <div class="model-card rf">
+      <div class="model-name">RANDOM FOREST</div>
+      <div class="model-desc">200-tree ensemble captures non-linear interactions between narrative strength, sentiment, and rolling windows. Robust to outliers. Gini importance for feature attribution.</div>
+      <div class="model-props">
+        <div class="model-prop"><span class="model-prop-key">Estimators</span><span class="model-prop-val">200</span></div>
+        <div class="model-prop"><span class="model-prop-key">Importance</span><span class="model-prop-val">feature_importances_</span></div>
+        <div class="model-prop"><span class="model-prop-key">Parallelism</span><span class="model-prop-val">n_jobs=-1</span></div>
+        <div class="model-prop"><span class="model-prop-key">CV</span><span class="model-prop-val">TimeSeriesSplit(5)</span></div>
+        <div class="model-prop"><span class="model-prop-key">Best for</span><span class="model-prop-val">Non-linearity</span></div>
+      </div>
+    </div>
+    <div class="model-card gb">
+      <div class="model-name">GRADIENT BOOSTING</div>
+      <div class="model-desc">Sequential 200-stage boosting minimises residual error iteratively. Typically achieves lowest RMSE on tabular financial features. Slower but highest accuracy ceiling.</div>
+      <div class="model-props">
+        <div class="model-prop"><span class="model-prop-key">Estimators</span><span class="model-prop-val">200</span></div>
+        <div class="model-prop"><span class="model-prop-key">Importance</span><span class="model-prop-val">feature_importances_</span></div>
+        <div class="model-prop"><span class="model-prop-key">Strategy</span><span class="model-prop-val">Sequential boosting</span></div>
+        <div class="model-prop"><span class="model-prop-key">CV</span><span class="model-prop-val">TimeSeriesSplit(5)</span></div>
+        <div class="model-prop"><span class="model-prop-key">Best for</span><span class="model-prop-val">Accuracy</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ARCHITECTURE ──────────────────────────────────────────────────────────── -->
+<div class="arch-section" id="architecture">
+<div class="arch-inner">
+  <div class="section-label">Technical Stack</div>
+  <h2 class="section-title">ARCHITECTURE</h2>
+
+  <div class="arch-grid">
+    <div class="arch-card">
+      <div class="arch-card-icon">🔤</div>
+      <div class="arch-card-title">sentence-transformers</div>
+      <div class="arch-card-desc">all-MiniLM-L6-v2 encodes each sentence into a 384-D semantic vector space. Cached via st.cache_data for zero recomputation cost.</div>
+    </div>
+    <div class="arch-card">
+      <div class="arch-card-icon">🗺️</div>
+      <div class="arch-card-title">UMAP</div>
+      <div class="arch-card-desc">Uniform Manifold Approximation preserves local and global structure during reduction from 384-D to 5-D (clustering) and 2-D (visualisation). Cosine metric matches embedding space.</div>
+    </div>
+    <div class="arch-card">
+      <div class="arch-card-icon">🧠</div>
+      <div class="arch-card-title">HDBSCAN</div>
+      <div class="arch-card-desc">Hierarchical density-based clustering. Naturally handles noise, variable-density clusters, and does not require a pre-specified cluster count. Returns confidence probabilities per point.</div>
+    </div>
+    <div class="arch-card">
+      <div class="arch-card-icon">💬</div>
+      <div class="arch-card-title">FinBERT</div>
+      <div class="arch-card-desc">ProsusAI/finbert — BERT fine-tuned on financial news corpora. Domain-aware positive/negative/neutral classification. Significantly outperforms lexicon-based TextBlob on financial text.</div>
+    </div>
+    <div class="arch-card">
+      <div class="arch-card-icon">🕸️</div>
+      <div class="arch-card-title">NetworkX</div>
+      <div class="arch-card-desc">Storyline graph with cosine-similarity weighted edges. Only intra-cluster pairs above a 0.85 threshold are connected — producing a meaningful graph instead of arbitrary complete subgraphs.</div>
+    </div>
+    <div class="arch-card">
+      <div class="arch-card-icon">📉</div>
+      <div class="arch-card-title">scikit-learn</div>
+      <div class="arch-card-desc">TF-IDF vectorisation, Ridge/RF/GBM models, StandardScaler pipeline, and TimeSeriesSplit cross-validation. Pipeline architecture prevents data leakage through the scaler step.</div>
+    </div>
+    <div class="arch-card">
+      <div class="arch-card-icon">📊</div>
+      <div class="arch-card-title">Streamlit</div>
+      <div class="arch-card-desc">Interactive 10-step UI with sidebar controls, st.cache_resource for model loading, st.cache_data for compute steps. Dark-themed with IBM Plex Mono typography.</div>
+    </div>
+    <div class="arch-card">
+      <div class="arch-card-icon">🐍</div>
+      <div class="arch-card-title">Project Files</div>
+      <div class="arch-card-desc">app.py · data_generator.py · generate_diagram.py · index.html · requirements.txt · README.md. Run: <code style="color:var(--blue)">streamlit run app.py</code></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- FOOTER ───────────────────────────────────────────────────────────────── -->
+<footer>
+  <div class="footer-left">
+    <strong style="color:var(--text);">Market Narrative Intelligence System</strong><br/>
+    BSc Final Year AI Project · 2024–2025<br/>
+    sentence-transformers · UMAP · HDBSCAN · FinBERT · scikit-learn · Streamlit
+  </div>
+  <div class="footer-right">MNI · 2025</div>
+</footer>
+
+<!-- SCRIPTS ──────────────────────────────────────────────────────────────── -->
+<script>
+  /* cursor */
+  const dot  = document.getElementById('cursor-dot');
+  const ring = document.getElementById('cursor-ring');
+  document.addEventListener('mousemove', e => {
+    dot.style.left  = e.clientX + 'px';
+    dot.style.top   = e.clientY + 'px';
+    ring.style.left = e.clientX + 'px';
+    ring.style.top  = e.clientY + 'px';
+  });
+
+  /* live clock */
+  function updateClock() {
+    const now = new Date();
+    const h = String(now.getUTCHours()).padStart(2,'0');
+    const m = String(now.getUTCMinutes()).padStart(2,'0');
+    const s = String(now.getUTCSeconds()).padStart(2,'0');
+    document.getElementById('live-clock').textContent = `UTC ${h}:${m}:${s}`;
+  }
+  setInterval(updateClock, 1000); updateClock();
+
+  /* intersection observer for pipe steps */
+  const steps = document.querySelectorAll('.pipe-step');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.15 });
+  steps.forEach(s => obs.observe(s));
+
+  /* stat cards stagger */
+  document.querySelectorAll('.stat-card').forEach((el, i) => {
+    el.style.animationDelay = `${i * 0.08}s`;
+  });
+</script>
+</body>
+</html>
