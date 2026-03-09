@@ -202,8 +202,8 @@ def train_vol_model(feats, model_type):
     y = feats["volatility"].values
     if len(X) < 10: return None, None, None, None
     mdl = {"Ridge Regression":  Ridge(alpha=1.0),
-           "Random Forest":     RandomForestRegressor(200, random_state=42, n_jobs=-1),
-           "Gradient Boosting": GradientBoostingRegressor(200, random_state=42)}[model_type]
+          "Random Forest": RandomForestRegressor(n_estimators=200, random_state=42, n_jobs=-1),
+           "Gradient Boosting": GradientBoostingRegressor(n_estimators=200, random_state=42)}[model_type]
     pipe  = Pipeline([("sc", StandardScaler()), ("m", mdl)])
     tscv  = TimeSeriesSplit(n_splits=5)
     rmses, r2s, y_pred = [], [], np.zeros_like(y, dtype=float)
